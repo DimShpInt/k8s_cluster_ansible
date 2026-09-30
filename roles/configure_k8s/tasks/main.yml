@@ -18,3 +18,7 @@
 - name: Install Cilium
   ansible.builtin.include_tasks: cilium_install.yml
   when: inventory_hostname in groups['masters'][0]
+
+- name: Install Argo CD
+  ansible.builtin.include_tasks: argocd_install.yml
+  when: inventory_hostname in groups['masters'][0]

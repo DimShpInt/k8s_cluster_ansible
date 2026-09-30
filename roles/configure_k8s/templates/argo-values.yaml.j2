@@ -1,0 +1,27 @@
+global:
+  domain: "{{ argocd_ingress_host }}"
+
+configs:
+  params:
+    server.insecure: true
+
+server:
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    ingressClassName: cilium
+    hostname: "{{ argocd_ingress_host }}"
+    path: /
+    pathType: Prefix
+    tls: false
+    annotations: {}
+
+controller:
+  replicas: 1
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  replicas: 1
