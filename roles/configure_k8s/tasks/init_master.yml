@@ -1,0 +1,86 @@
+---
+- name: Create kubeadm configuration file
+  ansible.builtin.template:
+    src: kubeadm-config.j2
+    dest: /etc/kubernetes/kubeadm-config.yaml
+    mode: "0640"
+
+- name: Check if Kubernetes is already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: configure_k8s_ext_admin_conf
+
+- name: Initialize Kubernetes cluster via kubeadm
+  ansible.builtin.command:
+    argv:
+      - kubeadm
+      - init
+      - --config=/etc/kubernetes/kubeadm-config.yaml
+      - --upload-certs
+      - --v=5
+  changed_when: false
+  when: not configure_k8s_ext_admin_conf.stat.exists
+
+- name: Create .kube directory for user
+  ansible.builtin.file:
+    path: "/home/{{ item }}/.kube"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ k8s_user }}"
+    - "root"
+
+- name: Copy admin.conf to user's kube config
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ item }}/.kube/config"
+    remote_src: true
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "0600"
+  loop:
+    - "{{ k8s_user }}"
+    - "root"
+
+- name: Generate join token
+  ansible.builtin.command:
+    argv:
+      - kubeadm
+      - token
+      - create
+      - --print-join-command
+  register: configure_k8s_join_command
+  changed_when: false
+
+- name: Read CA certificate
+  ansible.builtin.slurp:
+    src: /etc/kubernetes/pki/ca.crt
+  register: configure_k8s_ca_crt_raw
+
+- name: Extract CA certificate information
+  community.crypto.x509_certificate_info:
+    content: "{{ configure_k8s_ca_crt_raw.content | b64decode }}"
+  register: configure_k8s_ca_info
+
+- name: Generate SHA256 hash of CA certificate
+  ansible.builtin.set_fact:
+    configure_k8s_ca_cert_hash: "sha256:{{ configure_k8s_ca_info.public_key_fingerprints.sha256 | replace(':', '') | lower }}"
+
+- name: Upload certs and get Certificate Key for Control Plane
+  ansible.builtin.command:
+    argv:
+      - kubeadm
+      - init
+      - phase
+      - upload-certs
+      - --upload-certs
+  register: configure_k8s_cert_key
+  changed_when: false
+
+- name: Save join facts for all hosts in playbook run
+  ansible.builtin.set_fact:
+    configure_k8s_token: "{{ configure_k8s_join_command.stdout_lines[0] | regex_search('--token (\\S+)', '\\1') | first }}"
+    configure_k8s_ca_hash: "{{ configure_k8s_ca_cert_hash }}"
+    configure_k8s_key: "{{ configure_k8s_cert_key.stdout_lines[-1] }}"
+  delegate_to: localhost
+  delegate_facts: true

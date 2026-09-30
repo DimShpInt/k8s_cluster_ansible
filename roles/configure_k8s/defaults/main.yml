@@ -1,0 +1,10 @@
+---
+configure_k8s_helm_script_url: "https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3"
+configure_k8s_cilium_version: "1.20.2"
+configure_k8s_cilium_repo_url: "https://helm.cilium.io/"
+configure_k8s_helm_version: "v3.22.0"
+configure_k8s_cilium_cluster_pool_mask: 24
+configure_k8s_pod_cidr: "10.244.0.0/16"
+configure_k8s_service_cidr: "10.96.0.0/12"
+configure_k8s_argo_repo_url: "https://argoproj.github.io/argo-helm"
+configure_k8s_argo_chart_version: "10.9.5"

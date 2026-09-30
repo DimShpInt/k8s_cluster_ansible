@@ -1,0 +1,14 @@
+---
+- name: Download and install Helm
+  ansible.builtin.shell: |
+    set -o pipefail
+    curl -fsSL {{ configure_k8s_helm_script_url }} | bash
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Autocomplete helm
+  ansible.builtin.shell: |
+    helm completion bash > /etc/bash_completion.d/helm
+  args:
+    creates: /etc/bash_completion.d/helm

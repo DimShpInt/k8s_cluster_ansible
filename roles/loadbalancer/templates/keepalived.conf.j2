@@ -1,0 +1,32 @@
+global_defs {
+    router_id {{ inventory_hostname }}
+    enable_script_security
+    script_user root
+}
+
+vrrp_script check_haproxy {
+    script "killall -0 haproxy"
+    interval 2
+    weight 2
+}
+
+vrrp_instance VI_1 {
+    state {{ (groups['loadbalancer'].index(inventory_hostname) == 0) | ternary('MASTER', 'BACKUP') }}
+    interface {{ ansible_default_ipv4.interface }}
+    virtual_router_id 10
+    priority {{ 101 - groups['loadbalancer'].index(inventory_hostname) }}
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass {{ loadbalancer_keepalived_pass }}
+    }
+
+    virtual_ipaddress {
+        {{ loadbalancer_vip }}/{{ loadbalancer_vip_cidr }}
+    }
+
+    track_script {
+        check_haproxy
+    }
+}

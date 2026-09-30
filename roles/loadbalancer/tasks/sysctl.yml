@@ -1,0 +1,13 @@
+---
+- name: Configure sysctl for Load Balancers
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-loadbalancer.conf
+  loop:
+    - key: 'net.ipv4.ip_forward'
+      value: '1'
+    - key: 'net.ipv4.ip_nonlocal_bind'
+      value: '1'

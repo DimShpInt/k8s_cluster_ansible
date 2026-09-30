@@ -1,0 +1,38 @@
+---
+- name: Add Cilium repository
+  kubernetes.core.helm_repository:
+    name: cilium
+    repo_url: "{{ configure_k8s_cilium_repo_url }}"
+
+- name: Ensure directory for Helm values files exists
+  ansible.builtin.file:
+    path: "/home/ubuntu/helm/cilium"
+    state: directory
+    mode: "0755"
+    owner: ubuntu
+    group: ubuntu
+
+- name: Template Cilium values
+  ansible.builtin.template:
+    src: cilium-values.yaml.j2
+    dest: "/home/ubuntu/helm/cilium/cilium-values.yaml"
+    mode: "0644"
+    owner: ubuntu
+    group: ubuntu
+
+- name: Install Cilium via Helm
+  kubernetes.core.helm:
+    state: present
+    name: cilium
+    chart_ref: cilium/cilium
+    chart_version: "{{ configure_k8s_cilium_version }}"
+    namespace: kube-system
+    wait: true
+    wait_timeout: "10m0s"
+    kubeconfig: "/etc/kubernetes/admin.conf"
+    update_repo_cache: true
+    history_max: 3
+    atomic: false
+    values_files: "/home/ubuntu/helm/cilium/cilium-values.yaml"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf

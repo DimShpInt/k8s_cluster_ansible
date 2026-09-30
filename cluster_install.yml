@@ -1,0 +1,39 @@
+---
+
+- name: Deploy k8s cluster
+  hosts: loadbalancer
+  gather_facts: true
+  any_errors_fatal: true
+  become: true
+  tasks:
+    - name: Deploy loadbalancer
+      ansible.builtin.include_role:
+        name: loadbalancer
+      tags: loadbalancer
+
+- name: Deploy k8s cluster
+  hosts: k8_cluster
+  gather_facts: true
+  any_errors_fatal: true
+  become: true
+  tasks:
+    - name: Prepare machine
+      ansible.builtin.include_role:
+        name: prerequest_machine
+      tags: k8_cluster
+
+    - name: Deploy containerd
+      ansible.builtin.include_role:
+        name: deploy_containerd
+      tags: k8_cluster
+
+    - name: Deploy k8s
+      ansible.builtin.include_role:
+        name: deploy_k8s
+      tags: k8_cluster
+
+    - name: Configure k8s
+      ansible.builtin.include_role:
+        name: configure_k8s
+      tags:
+        - k8_cluster

@@ -1,0 +1,9 @@
+---
+- name: Disable swap
+  ansible.builtin.include_tasks: swap.yml
+
+- name: Configure sysctl parameters
+  ansible.builtin.include_tasks: sysctl.yml
+
+- name: Install HAProxy and Keepalived
+  ansible.builtin.include_tasks: install.yml

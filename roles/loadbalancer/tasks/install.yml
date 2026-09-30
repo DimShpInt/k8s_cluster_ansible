@@ -1,0 +1,53 @@
+---
+- name: Add HAProxy official PPA repository
+  ansible.builtin.apt_repository:
+    repo: "ppa:vbernat/haproxy-{{ loadbalancer_haproxy_ppa_version }}"
+    state: present
+    update_cache: true
+
+- name: Install HAProxy and Keepalived
+  ansible.builtin.apt:
+    name:
+      - "haproxy={{ loadbalancer_haproxy_version }}"
+      - "keepalived={{ loadbalancer_keepalived_version }}"
+      - psmisc
+    state: present
+    update_cache: true
+
+- name: Lock HAProxy and Keepalived versions (apt-mark hold)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - haproxy
+    - keepalived
+
+- name: Generate Keepalived password
+  ansible.builtin.set_fact:
+    loadbalancer_keepalived_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}"
+  run_once: true
+  delegate_to: localhost
+  no_log: "{{ switch_no_log | default(true) }}"
+
+- name: Create HAProxy configuration
+  ansible.builtin.template:
+    src: templates/haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    mode: "0644"
+  notify: Restart haproxy
+
+- name: Create Keepalived configuration
+  ansible.builtin.template:
+    src: templates/keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    mode: "0644"
+  notify: Restart keepalived
+
+- name: Start and enable services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - haproxy
+    - keepalived

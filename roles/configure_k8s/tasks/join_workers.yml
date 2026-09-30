@@ -1,0 +1,19 @@
+---
+- name: Check if worker node is already joined
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: configure_k8s_kubelet_conf
+
+- name: Join worker node
+  ansible.builtin.command:
+    argv:
+      - kubeadm
+      - join
+      - "{{ loadbalancer_vip }}:{{ loadbalancer_port }}"
+      - --token
+      - "{{ hostvars['localhost']['configure_k8s_token'] }}"
+      - --discovery-token-ca-cert-hash
+      - "{{ hostvars['localhost']['configure_k8s_ca_hash'] }}"
+      - --v=5
+  changed_when: false
+  when: not configure_k8s_kubelet_conf.stat.exists

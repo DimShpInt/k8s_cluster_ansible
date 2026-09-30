@@ -1,0 +1,67 @@
+---
+- name: Install packages for Kubernetes repository
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+    state: present
+    update_cache: true
+
+- name: Create keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download Kubernetes APT repository key
+  ansible.builtin.get_url:
+    url: "{{ deploy_k8s_repository_key }}"
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+    mode: "0644"
+    force: true
+
+- name: Add Kubernetes APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] {{ deploy_k8s_repository }} /"
+    state: present
+    filename: kubernetes
+
+- name: Install kubelet, kubeadm, and kubectl
+  ansible.builtin.apt:
+    name:
+      - "kubelet={{ deploy_k8s_version }}*"
+      - "kubeadm={{ deploy_k8s_version }}*"
+      - "kubectl={{ deploy_k8s_version }}*"
+    state: present
+    update_cache: true
+
+- name: Hold Kubernetes packages from automatic upgrade
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Ensure kubelet is enabled
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+
+- name: Autocomplete kubectl and kubeadm
+  ansible.builtin.shell: |
+    kubectl completion bash > /etc/bash_completion.d/kubectl
+    kubeadm completion bash > /etc/bash_completion.d/kubeadm
+  args:
+    creates: /etc/bash_completion.d/kubectl
+
+- name: Alias kubectl to k and enable autocomplete
+  ansible.builtin.copy:
+    dest: /etc/profile.d/k8s_alias.sh
+    mode: "0644"
+    content: |
+      alias k=kubectl
+      complete -o default -F __start_kubectl k

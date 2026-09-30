@@ -1,0 +1,87 @@
+kubeProxyReplacement: true
+
+k8sServiceHost: "{{ loadbalancer_vip }}"
+k8sServicePort: "{{ loadbalancer_port }}"
+
+routingMode: tunnel
+tunnelProtocol: vxlan
+
+bpf:
+  masquerade: true
+
+rollOutCiliumPods: true
+
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList: 
+        - {{ configure_k8s_pod_cidr }}
+    clusterPoolIPv4MaskSize: {{ configure_k8s_cilium_cluster_pool_mask }}
+
+ingressController:
+  enabled: true
+  default: false
+  loadbalancerMode: shared
+  service:
+    type: NodePort
+    insecureNodePort: {{ ingress_http_node_port }}
+    secureNodePort: {{ ingress_https_node_port }}
+    externalTrafficPolicy: Cluster
+
+hubble:
+  enabled: true
+  relay:
+    enabled: true      
+  ui:
+    enabled: true      
+    ingress:           
+      enabled: true
+      className: cilium 
+      hosts:
+        - "{{ hubble_ingress_host }}" 
+      tls: []      
+  metrics:
+    enabled: null        
+  
+operator:
+  rollOutPods: true
+  replicas: {{ 2 if (groups['masters'] | length) > 1 else 1 }}
+  tolerations:
+    - operator: Exists
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+podAnnotations:              
+  container.apparmor.security.beta.kubernetes.io/apply-sysctl-overwrites: unconfined
+  container.apparmor.security.beta.kubernetes.io/cilium-agent: unconfined
+  container.apparmor.security.beta.kubernetes.io/clean-cilium-state: unconfined
+  container.apparmor.security.beta.kubernetes.io/mount-cgroup: unconfined
+
+socketLB:
+  enabled: true      
+  hostNamespaceOnly: true
+
+cni:
+  exclusive: false 
+
+localRedirectPolicy: true
+
+egressGateway:
+  enabled: false
+
+envoy:
+  enabled: true
+
+  prometheus:
+    enabled: false
+
+tls:
+  secretsNamespace:
+    create: false
+  readSecretsOnlyFromSecretsNamespace: false
+  secretSync:
+    enabled: false  

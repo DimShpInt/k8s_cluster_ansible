@@ -1,0 +1,12 @@
+---
+- name: Disable swap
+  ansible.builtin.include_tasks: swap.yml
+
+- name: Configure kernel modules
+  ansible.builtin.include_tasks: kernel.yml
+
+- name: Configure sysctl parameters
+  ansible.builtin.include_tasks: sysctl.yml
+
+- name: Disable automatic updates
+  ansible.builtin.include_tasks: disable_updates.yml

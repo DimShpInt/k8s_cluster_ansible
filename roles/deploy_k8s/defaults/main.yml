@@ -1,0 +1,4 @@
+---
+deploy_k8s_version: "1.34.12"
+deploy_k8s_repository_key: "https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key"
+deploy_k8s_repository: "https://pkgs.k8s.io/core:/stable:/v1.34/deb/"

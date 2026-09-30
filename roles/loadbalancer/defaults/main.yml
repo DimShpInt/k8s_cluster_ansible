@@ -1,0 +1,4 @@
+---
+loadbalancer_haproxy_ppa_version: "3.0"
+loadbalancer_haproxy_version: "3.0.*"
+loadbalancer_keepalived_version: "1:2.2.*"

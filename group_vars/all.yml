@@ -1,0 +1,13 @@
+---
+k8s_user: "ubuntu"
+
+loadbalancer_vip: "192.168.200.100"
+loadbalancer_vip_cidr: 24
+loadbalancer_port: 6443
+
+ingress_http_node_port: 30080
+ingress_https_node_port: 30443
+
+# Домены
+hubble_ingress_host: "hubble.local"
+argocd_ingress_host: "argocd.local"
