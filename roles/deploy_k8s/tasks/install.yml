@@ -36,6 +36,7 @@
       - "kubectl={{ deploy_k8s_version }}*"
     state: present
     update_cache: true
+    allow_change_held_packages: true
 
 - name: Hold Kubernetes packages from automatic upgrade
   ansible.builtin.dpkg_selections:

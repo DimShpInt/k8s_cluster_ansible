@@ -26,7 +26,7 @@
     name: cilium
     chart_ref: cilium/cilium
     chart_version: "{{ configure_k8s_cilium_version }}"
-    namespace: kube-system
+    namespace: "{{ configure_k8s_cilium_namespace }}"
     wait: true
     wait_timeout: "10m0s"
     kubeconfig: "/etc/kubernetes/admin.conf"
